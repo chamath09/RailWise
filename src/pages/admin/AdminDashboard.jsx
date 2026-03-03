@@ -74,13 +74,24 @@ export default function AdminDashboard() {
             bookings: bookingsCount.count || 0
         })
 
-        // Fetch all bookings with user profile info for admin vs user breakdown
-        const { data: allBookings } = await supabase
+        // Fetch all bookings (no FK join needed)
+        const { data: allBookings, error: bookingsError } = await supabase
             .from('bookings')
-            .select(`*, user:profiles!bookings_user_id_fkey(is_admin)`)
+            .select('*')
+
+        if (bookingsError) console.error('Bookings fetch error:', bookingsError)
 
         const bookings = allBookings || []
-        const adminB = bookings.filter(b => b.user?.is_admin === true).length
+
+        // Fetch admin user IDs separately from profiles
+        const { data: adminProfiles } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('is_admin', true)
+
+        const adminUserIds = new Set((adminProfiles || []).map(p => p.id))
+
+        const adminB = bookings.filter(b => adminUserIds.has(b.user_id)).length
         const userB = bookings.length - adminB
         const confirmedB = bookings.filter(b => b.status === 'confirmed').length
         const cancelledB = bookings.filter(b => b.status === 'cancelled').length
