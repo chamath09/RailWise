@@ -9,6 +9,18 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         loadDashboard()
+
+        // Subscribe to real-time changes on the bookings table
+        const bookingSubscription = supabase
+            .channel('admin-dashboard-bookings')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, () => {
+                loadDashboard()
+            })
+            .subscribe()
+
+        return () => {
+            bookingSubscription.unsubscribe()
+        }
     }, [])
 
     async function loadDashboard() {
