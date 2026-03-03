@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { motion } from 'framer-motion'
 
 export default function MyBookings() {
     const { user } = useAuth()
@@ -70,6 +71,19 @@ export default function MyBookings() {
                 <div className="page-header">
                     <h1>My <span className="text-accent">Bookings</span></h1>
                     <p>View and manage your train ticket reservations</p>
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                        style={{ marginTop: '20px' }}
+                    >
+                        <Link to="/trains" className="btn btn-primary btn-new-booking">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            New Booking
+                        </Link>
+                    </motion.div>
                 </div>
 
                 {bookings.length === 0 ? (
@@ -83,8 +97,14 @@ export default function MyBookings() {
                     </div>
                 ) : (
                     <div className="bookings-list">
-                        {bookings.map(booking => (
-                            <div key={booking.id} className={`booking-item ${booking.status}`}>
+                        {bookings.map((booking, index) => (
+                            <motion.div
+                                key={booking.id}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.06, duration: 0.4 }}
+                                className={`booking-item ${booking.status}`}
+                            >
                                 <div className="booking-item-header">
                                     <div className="booking-train">
                                         <h3>{booking.schedule?.train?.name}</h3>
@@ -122,7 +142,7 @@ export default function MyBookings() {
                                         </button>
                                     )}
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 )}
