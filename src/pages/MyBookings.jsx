@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { motion } from 'framer-motion'
+import { useToast } from '../context/ToastContext'
 
 export default function MyBookings() {
     const { user } = useAuth()
+    const toast = useToast()
     const [bookings, setBookings] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -35,7 +37,13 @@ export default function MyBookings() {
     }
 
     async function handleCancel(bookingId) {
-        if (!confirm('Are you sure you want to cancel this booking?')) return
+        const confirmed = await toast.confirm({
+            title: 'Cancel Booking',
+            message: 'Are you sure you want to cancel this booking?',
+            confirmText: 'Yes, Cancel',
+            type: 'danger'
+        })
+        if (!confirmed) return
 
         const { error } = await supabase
             .from('bookings')
@@ -44,6 +52,9 @@ export default function MyBookings() {
 
         if (!error) {
             setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'cancelled' } : b))
+            toast.success('Booking cancelled successfully')
+        } else {
+            toast.error('Failed to cancel booking')
         }
     }
 

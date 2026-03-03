@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import { useToast } from '../../context/ToastContext'
 
 export default function AdminSchedules() {
+    const toast = useToast()
     const [schedules, setSchedules] = useState([])
     const [trains, setTrains] = useState([])
     const [stations, setStations] = useState([])
@@ -106,13 +108,21 @@ export default function AdminSchedules() {
         setSaving(false)
         setShowModal(false)
         loadData()
+        toast.success(editing ? 'Schedule updated successfully!' : 'Schedule added successfully!')
     }
 
     async function handleDelete(id) {
-        if (!confirm('Are you sure? Related bookings may be affected.')) return
+        const confirmed = await toast.confirm({
+            title: 'Delete Schedule',
+            message: 'Are you sure? Related bookings may be affected.',
+            confirmText: 'Delete',
+            type: 'danger'
+        })
+        if (!confirmed) return
         const { error } = await supabase.from('schedules').delete().eq('id', id)
-        if (error) { alert(error.message); return }
+        if (error) { toast.error(error.message); return }
         loadData()
+        toast.success('Schedule deleted successfully!')
     }
 
     function formatTime(time) {

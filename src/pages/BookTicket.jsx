@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 
 export default function BookTicket() {
     const { id } = useParams()
     const navigate = useNavigate()
     const { user } = useAuth()
+    const toast = useToast()
     const [schedule, setSchedule] = useState(null)
     const [loading, setLoading] = useState(true)
     const [submitting, setSubmitting] = useState(false)
@@ -76,12 +78,12 @@ export default function BookTicket() {
             return
         }
 
-        // Update available seats
         await supabase
             .from('schedules')
             .update({ available_seats: schedule.available_seats - seats })
             .eq('id', schedule.id)
 
+        toast.success('Ticket booked successfully!')
         setSuccess(true)
         setSubmitting(false)
     }
