@@ -1,18 +1,34 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function Navbar() {
     const { user, isAdmin, signOut } = useAuth()
     const navigate = useNavigate()
     const [menuOpen, setMenuOpen] = useState(false)
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const dropdownRef = useRef(null)
 
     const handleSignOut = async () => {
         await signOut()
         setDropdownOpen(false)
+        setMenuOpen(false)
         navigate('/')
     }
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(e) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const avatarInitial = user?.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || '?'
+    const displayName = user?.user_metadata?.full_name || user?.email
 
     return (
         <nav className="navbar">
@@ -51,24 +67,31 @@ export default function Navbar() {
                     )}
 
                     {user ? (
-                        <div className="navbar-user">
+                        <div className="navbar-user" ref={dropdownRef}>
                             <button className="navbar-user-btn" onClick={() => setDropdownOpen(!dropdownOpen)}>
                                 <div className="navbar-avatar">
-                                    {user.user_metadata?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase()}
+                                    {avatarInitial}
                                 </div>
-                                <span className="navbar-user-name">{user.user_metadata?.full_name || user.email}</span>
+                                <span className="navbar-user-name">{displayName}</span>
                                 <svg className={`dropdown-arrow ${dropdownOpen ? 'open' : ''}`} width="12" height="12" viewBox="0 0 12 12">
                                     <path d="M3 5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" />
                                 </svg>
                             </button>
                             {dropdownOpen && (
                                 <div className="dropdown-menu">
-                                    <div className="dropdown-header">
-                                        <p className="dropdown-email">{user.email}</p>
-                                        {isAdmin && <span className="dropdown-admin-badge">Admin</span>}
+                                    {/* Profile section */}
+                                    <div className="dropdown-profile">
+                                        <div className="dropdown-profile-avatar">
+                                            {avatarInitial}
+                                        </div>
+                                        <div className="dropdown-profile-info">
+                                            <p className="dropdown-profile-name">{user.user_metadata?.full_name || 'User'}</p>
+                                            <p className="dropdown-email">{user.email}</p>
+                                            {isAdmin && <span className="dropdown-admin-badge">Admin</span>}
+                                        </div>
                                     </div>
                                     {isAdmin && (
-                                        <Link to="/admin" className="dropdown-item" onClick={() => setDropdownOpen(false)}>
+                                        <Link to="/admin" className="dropdown-item dropdown-item-admin" onClick={() => { setDropdownOpen(false); setMenuOpen(false) }}>
                                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                                                 <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
                                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9" />
@@ -76,7 +99,14 @@ export default function Navbar() {
                                             Admin Panel
                                         </Link>
                                     )}
-                                    <button className="dropdown-item" onClick={handleSignOut}>
+                                    <Link to="/my-bookings" className="dropdown-item dropdown-item-bookings" onClick={() => { setDropdownOpen(false); setMenuOpen(false) }}>
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                            <rect x="3" y="4" width="18" height="16" rx="2" />
+                                            <path d="M8 9h8M8 13h5" />
+                                        </svg>
+                                        My Bookings
+                                    </Link>
+                                    <button className="dropdown-item dropdown-item-signout" onClick={handleSignOut}>
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                                             <path d="M6 14H3.33C2.6 14 2 13.4 2 12.67V3.33C2 2.6 2.6 2 3.33 2H6M10.67 11.33L14 8L10.67 4.67M14 8H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
                                         </svg>
